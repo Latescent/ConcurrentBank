@@ -63,7 +63,7 @@ $(BUILD_DIR)/queue.o: $(SRC_DIR)/queue.c
 # Utility Targets
 #################################################
 
-run: clearn all
+run: clean all
 	./build/entry_point
 
 clean:
