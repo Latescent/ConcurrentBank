@@ -15,7 +15,7 @@ void init_bank();
 
 int transfer_money(int from, int to, int amount);
 
-void deposit_money(int account, int amount);
+int deposit_money(int account, int amount);
 
 int withdraw_money(int account, int amount);
 
