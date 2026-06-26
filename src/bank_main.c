@@ -9,6 +9,7 @@
 
 #include "../include/bank.h"
 #include "../include/common.h"
+#include "../include/logger.h"
 #include "../include/queue.h"
 
 volatile sig_atomic_t running = 1;
@@ -30,7 +31,7 @@ void *reader_thread(void *arg) {
     return NULL;
   }
 
-  printf("Reader thread started.\n");
+  log_printf("Reader thread started.\n");
 
   struct pollfd pfd;
   pfd.fd = fd;
@@ -65,7 +66,7 @@ void *reader_thread(void *arg) {
 
   close(fd);
 
-  printf("Reader thread exiting...\n");
+  log_printf("Reader thread exiting...\n");
 
   BankRequest stop;
   stop.type = SHUTDOWN;
@@ -80,7 +81,7 @@ void *reader_thread(void *arg) {
 void *worker_thread(void *arg) {
   int id = *(int *)arg;
 
-  printf("Worker %d started.\n", id);
+  log_printf("Worker %d started.\n", id);
 
   while (1) {
     BankRequest req = dequeue(&queue);
@@ -92,7 +93,7 @@ void *worker_thread(void *arg) {
 
       success = transfer_money(req.account1, req.account2, req.amount);
 
-      printf(
+      log_printf(
           "WORKER %d | CUSTOMER %d | TRANSFER | %d -> %d | Amount = %d | %s\n",
           id, req.customer_id, req.account1, req.account2, req.amount,
           success ? "SUCCESS" : "FAILED");
@@ -103,7 +104,7 @@ void *worker_thread(void *arg) {
 
       success = deposit_money(req.account1, req.amount);
 
-      printf(
+      log_printf(
           "WORKER %d | CUSTOMER %d | DEPOSIT | Account %d | Amount = %d | %s\n",
           id, req.customer_id, req.account1, req.amount,
           success ? "SUCCESS" : "FAILED");
@@ -114,30 +115,32 @@ void *worker_thread(void *arg) {
 
       success = withdraw_money(req.account1, req.amount);
 
-      printf("WORKER %d | CUSTOMER %d | WITHDRAW | Account %d | Amount = %d | "
-             "%s\n",
-             id, req.customer_id, req.account1, req.amount,
-             success ? "SUCCESS" : "FAILED");
+      log_printf(
+          "WORKER %d | CUSTOMER %d | WITHDRAW | Account %d | Amount = %d | "
+          "%s\n",
+          id, req.customer_id, req.account1, req.amount,
+          success ? "SUCCESS" : "FAILED");
 
       break;
 
     case BALANCE:
 
-      printf("WORKER %d | CUSTOMER %d | BALANCE | Account %d | Balance = %d\n",
-             id, req.customer_id, req.account1, get_balance(req.account1));
+      log_printf(
+          "WORKER %d | CUSTOMER %d | BALANCE | Account %d | Balance = %d\n", id,
+          req.customer_id, req.account1, get_balance(req.account1));
 
       break;
 
     case SHUTDOWN:
 
-      printf("Worker %d exiting.\n", id);
+      log_printf("Worker %d exiting.\n", id);
       return NULL;
     }
   }
 }
 
 int main(void) {
-  printf("========== BANK ==========\n");
+  log_printf("========== BANK ==========\n");
 
   init_bank();
 
@@ -179,11 +182,11 @@ int main(void) {
     pthread_join(workers[i], NULL);
   }
 
-  printf("\n========== FINAL STATE ==========\n");
+  log_printf("\n========== FINAL STATE ==========\n");
 
   print_bank();
 
-  printf("Bank shutdown complete.\n");
+  log_printf("Bank shutdown complete.\n");
 
   return EXIT_SUCCESS;
 }

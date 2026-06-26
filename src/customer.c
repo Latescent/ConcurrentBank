@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "../include/common.h"
+#include "../include/logger.h"
 
 static int rand_account(void) { return rand() % NUM_ACCOUNTS; }
 
@@ -27,7 +28,7 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  printf("Customer %d started.\n", customer_id);
+  log_printf("Customer %d started.\n", customer_id);
 
   for (int i = 0; i < REQUESTS_PER_CUSTOMER; i++) {
     BankRequest req;
@@ -46,8 +47,8 @@ int main(int argc, char *argv[]) {
         req.account2 = rand_account();
       } while (req.account1 == req.account2);
 
-      printf("[Customer %d] TRANSFER %d -> %d (%d)\n", customer_id,
-             req.account1, req.account2, req.amount);
+      log_printf("[Customer %d] TRANSFER %d -> %d (%d)\n", customer_id,
+                 req.account1, req.account2, req.amount);
 
     } else if (r < 70) {
 
@@ -57,8 +58,8 @@ int main(int argc, char *argv[]) {
       req.account2 = -1;
       // req.amount = 0;
 
-      printf("[Customer %d] DEPOSIT %d (%d)\n", customer_id, req.account1,
-             req.amount);
+      log_printf("[Customer %d] DEPOSIT %d (%d)\n", customer_id, req.account1,
+                 req.amount);
 
     } else if (r < 90) {
 
@@ -68,8 +69,8 @@ int main(int argc, char *argv[]) {
       req.account2 = -1;
       // req.amount = 0;
 
-      printf("[Customer %d] WITHDRAW %d (%d)\n", customer_id, req.account1,
-             req.amount);
+      log_printf("[Customer %d] WITHDRAW %d (%d)\n", customer_id, req.account1,
+                 req.amount);
 
     } else {
 
@@ -79,7 +80,7 @@ int main(int argc, char *argv[]) {
       req.account2 = -1;
       req.amount = 0;
 
-      printf("[Customer %d] BALANCE %d\n", customer_id, req.account1);
+      log_printf("[Customer %d] BALANCE %d\n", customer_id, req.account1);
     }
 
     if (write(fd, &req, sizeof(req)) != sizeof(req)) {
@@ -92,7 +93,7 @@ int main(int argc, char *argv[]) {
 
   close(fd);
 
-  printf("Customer %d exiting.\n", customer_id);
+  log_printf("Customer %d exiting.\n", customer_id);
 
   return EXIT_SUCCESS;
 }

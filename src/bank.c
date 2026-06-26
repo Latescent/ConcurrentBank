@@ -1,24 +1,10 @@
 #include <pthread.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "../include/bank.h"
+#include "../include/logger.h"
 
 static Account accounts[NUM_ACCOUNTS];
-
-static FILE *log_file = NULL;
-static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static void log_transaction(const char *message) {
-  pthread_mutex_lock(&log_mutex);
-
-  if (log_file != NULL) {
-    fprintf(log_file, "%s\n", message);
-    fflush(log_file);
-  }
-
-  pthread_mutex_unlock(&log_mutex);
-}
 
 void init_bank() {
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
@@ -26,12 +12,6 @@ void init_bank() {
     accounts[i].balance = INITIAL_BALANCE;
 
     pthread_mutex_init(&accounts[i].lock, NULL);
-  }
-
-  log_file = fopen("logs/transactions.log", "w");
-
-  if (log_file == NULL) {
-    perror("Cannot create log file");
   }
 }
 
@@ -52,8 +32,6 @@ int transfer_money(int from, int to, int amount) {
   pthread_mutex_lock(&accounts[first].lock);
   pthread_mutex_lock(&accounts[second].lock);
 
-  char buffer[256];
-
   if (accounts[from].balance >= amount) {
     accounts[from].balance -= amount;
     accounts[to].balance += amount;
@@ -65,8 +43,6 @@ int transfer_money(int from, int to, int amount) {
 
   pthread_mutex_unlock(&accounts[second].lock);
   pthread_mutex_unlock(&accounts[first].lock);
-
-  log_transaction(buffer);
 
   return return_val;
 }
@@ -118,16 +94,16 @@ int get_balance(int account) {
 }
 
 void print_bank() {
-  printf("\n========== BANK ==========\n");
+  log_printf("\n========== BANK ==========\n");
 
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
-    printf("Account %2d : %6d\n", i, get_balance(i));
+    log_printf("Account %2d : %6d\n", i, get_balance(i));
   }
 
-  printf("--------------------------\n");
-  printf("Total = %d\n", total_balance());
+  log_printf("--------------------------\n");
+  log_printf("Total = %d\n", total_balance());
 
-  printf("==========================\n");
+  log_printf("==========================\n");
 }
 
 int total_balance() {

@@ -9,9 +9,10 @@
 #include <sys/wait.h>
 
 #include "../include/common.h"
+#include "../include/logger.h"
 
 int main(void) {
-  mkdir("logs", 0777);
+  logger_init("logs/system.log");
 
   // Del FIFO
   unlink(FIFO_PATH);
@@ -21,7 +22,7 @@ int main(void) {
     return EXIT_FAILURE;
   }
 
-  printf("FIFO created.\n");
+  log_printf("FIFO created.\n");
 
   // Start Bank
   pid_t bank_pid = fork();
@@ -39,7 +40,7 @@ int main(void) {
     exit(EXIT_FAILURE);
   }
 
-  printf("Bank started. PID = %d\n", bank_pid);
+  log_printf("Bank started. PID = %d\n", bank_pid);
 
   // Start Customers
   pid_t customer_pids[MAX_CUSTOMERS];
@@ -65,26 +66,26 @@ int main(void) {
 
     customer_pids[i] = pid;
 
-    printf("Customer %d started (PID=%d)\n", i, pid);
+    log_printf("Customer %d started (PID=%d)\n", i, pid);
   }
 
   // Wait for customers
   for (int i = 0; i < MAX_CUSTOMERS; i++) {
     waitpid(customer_pids[i], NULL, 0);
 
-    printf("Customer %d finished.\n", i);
+    log_printf("Customer %d finished.\n", i);
   }
 
   // Shutdown Bank
-  printf("\n");
-  printf("=====================================\n");
-  printf("All customers have finished.\n");
-  printf("Press ENTER to shutdown the bank...");
+  log_printf("\n");
+  log_printf("=====================================\n");
+  log_printf("All customers have finished.\n");
+  log_printf("Press ENTER to shutdown the bank...");
   fflush(stdout);
 
   getchar();
 
-  printf("\nSending SIGINT to bank...\n");
+  log_printf("\nSending SIGINT to bank...\n");
 
   if (kill(bank_pid, SIGINT) == -1) {
     perror("kill");
@@ -92,14 +93,16 @@ int main(void) {
 
   waitpid(bank_pid, NULL, 0);
 
-  printf("Bank stopped.\n");
+  log_printf("Bank stopped.\n");
 
   // Cleanup
+  logger_close();
+
   unlink(FIFO_PATH);
 
-  printf("FIFO removed.\n");
+  log_printf("FIFO removed.\n");
 
-  printf("Done.\n");
+  log_printf("Done.\n");
 
   return EXIT_SUCCESS;
 }
