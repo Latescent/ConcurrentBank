@@ -77,26 +77,25 @@ void *worker_thread(void *arg) {
 
       printf("[Worker %d] Transfer\n", id);
 
-      transfer_money(req.from_account, req.to_account, req.amount);
+      transfer_money(req.account1, req.account2, req.amount);
 
       break;
 
     case DEPOSIT:
 
-      deposit_money(req.to_account, req.amount);
+      deposit_money(req.account2, req.amount);
 
       break;
 
     case WITHDRAW:
 
-      withdraw_money(req.from_account, req.amount);
+      withdraw_money(req.account1, req.amount);
 
       break;
 
     case BALANCE:
 
-      printf("Account %d : %d\n", req.from_account,
-             get_balance(req.from_account));
+      printf("Account %d : %d\n", req.account1, get_balance(req.account1));
 
       break;
 

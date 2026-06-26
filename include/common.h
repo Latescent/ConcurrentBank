@@ -21,8 +21,8 @@ typedef struct {
 
   int customer_id;
 
-  int from_account;
-  int to_account;
+  int account1;
+  int account2;
 
   int amount;
 
