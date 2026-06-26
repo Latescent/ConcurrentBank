@@ -26,6 +26,6 @@ typedef struct {
 
   int amount;
 
-} TransferRequest;
+} BankRequest;
 
 #endif

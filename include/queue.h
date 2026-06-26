@@ -4,7 +4,7 @@
 #include "common.h"
 
 typedef struct {
-  TransferRequest requests[MAX_QUEUE_SIZE];
+  BankRequest requests[MAX_QUEUE_SIZE];
 
   int front;
   int rear;
@@ -19,8 +19,8 @@ typedef struct {
 
 void queue_init(RequestQueue *q);
 
-void enqueue(RequestQueue *q, TransferRequest request);
+void enqueue(RequestQueue *q, BankRequest request);
 
-TransferRequest dequeue(RequestQueue *q);
+BankRequest dequeue(RequestQueue *q);
 
 #endif

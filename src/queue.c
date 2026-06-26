@@ -11,7 +11,7 @@ void queue_init(RequestQueue *q) {
   pthread_cond_init(&q->not_full, NULL);
 }
 
-void enqueue(RequestQueue *q, TransferRequest request) {
+void enqueue(RequestQueue *q, BankRequest request) {
   pthread_mutex_lock(&q->mutex);
 
   while (q->count == MAX_QUEUE_SIZE) {
@@ -29,14 +29,14 @@ void enqueue(RequestQueue *q, TransferRequest request) {
   pthread_mutex_unlock(&q->mutex);
 }
 
-TransferRequest dequeue(RequestQueue *q) {
+BankRequest dequeue(RequestQueue *q) {
   pthread_mutex_lock(&q->mutex);
 
   while (q->count == 0) {
     pthread_cond_wait(&q->not_empty, &q->mutex);
   }
 
-  TransferRequest request = q->requests[q->front];
+  BankRequest request = q->requests[q->front];
 
   q->front = (q->front + 1) % MAX_QUEUE_SIZE;
 
