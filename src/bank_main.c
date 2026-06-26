@@ -140,6 +140,8 @@ void *worker_thread(void *arg) {
 }
 
 int main(void) {
+  logger_init("logs/system.log");
+
   log_printf("========== BANK ==========\n");
 
   init_bank();
@@ -182,7 +184,7 @@ int main(void) {
     pthread_join(workers[i], NULL);
   }
 
-  log_printf("\n========== FINAL STATE ==========\n");
+  log_printf("========== FINAL STATE ==========\n");
 
   print_bank();
 

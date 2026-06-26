@@ -94,7 +94,7 @@ int get_balance(int account) {
 }
 
 void print_bank() {
-  log_printf("\n========== BANK ==========\n");
+  log_printf("========== BANK ==========\n");
 
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
     log_printf("Account %2d : %6d\n", i, get_balance(i));

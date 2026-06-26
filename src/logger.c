@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <sys/file.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -24,17 +25,22 @@ static void print_prefix(FILE *stream) {
 }
 
 void logger_init(const char *filename) {
-  log_file = fopen(filename, "w");
+  log_file = fopen(filename, "a");
 
-  if (!log_file)
-    perror("fopen");
+  if (log_file == NULL) {
+    perror("logger fopen");
+  }
 }
 
 void logger_close(void) {
+  pthread_mutex_lock(&log_mutex);
+
   if (log_file) {
     fclose(log_file);
     log_file = NULL;
   }
+
+  pthread_mutex_unlock(&log_mutex);
 }
 
 void log_printf(const char *fmt, ...) {
@@ -55,6 +61,8 @@ void log_printf(const char *fmt, ...) {
   /* ---------- Log file ---------- */
 
   if (log_file) {
+    flock(fileno(log_file), LOCK_EX);
+
     print_prefix(log_file);
 
     va_start(args, fmt);
@@ -62,6 +70,8 @@ void log_printf(const char *fmt, ...) {
     va_end(args);
 
     fflush(log_file);
+
+    flock(fileno(log_file), LOCK_UN);
   }
 
   pthread_mutex_unlock(&log_mutex);

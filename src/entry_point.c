@@ -77,15 +77,14 @@ int main(void) {
   }
 
   // Shutdown Bank
-  log_printf("\n");
   log_printf("=====================================\n");
   log_printf("All customers have finished.\n");
-  log_printf("Press ENTER to shutdown the bank...");
+  log_printf("Press ENTER to shutdown the bank...\n");
   fflush(stdout);
 
   getchar();
 
-  log_printf("\nSending SIGINT to bank...\n");
+  log_printf("Sending SIGINT to bank...\n");
 
   if (kill(bank_pid, SIGINT) == -1) {
     perror("kill");
@@ -96,13 +95,14 @@ int main(void) {
   log_printf("Bank stopped.\n");
 
   // Cleanup
-  logger_close();
 
   unlink(FIFO_PATH);
 
   log_printf("FIFO removed.\n");
 
   log_printf("Done.\n");
+
+  logger_close();
 
   return EXIT_SUCCESS;
 }
