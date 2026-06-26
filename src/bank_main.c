@@ -1,10 +1,10 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "../include/bank.h"
@@ -13,123 +13,140 @@
 
 volatile sig_atomic_t running = 1;
 
-void sigint_handler(int sig) { running = 0; }
-
 RequestQueue queue;
 
+void sigint_handler(int sig) {
+  (void)sig;
+  running = 0;
+}
+
 void *reader_thread(void *arg) {
+  (void)arg;
+
   int fd = open(FIFO_PATH, O_RDWR);
 
-  if (fd < 0) {
+  if (fd == -1) {
     perror("open");
-    pthread_exit(NULL);
+    return NULL;
   }
 
   printf("Reader thread started.\n");
 
+  struct pollfd pfd;
+  pfd.fd = fd;
+  pfd.events = POLLIN;
+
   while (running) {
-    BankRequest req;
+    int ret = poll(&pfd, 1, 100);
 
-    ssize_t bytes = read(fd, &req, sizeof(req));
+    if (ret == 0)
+      continue;
 
-    if (bytes == 0) {
-      printf("All customers disconnected.\n");
+    if (ret < 0) {
+      if (errno == EINTR)
+        continue;
 
+      perror("poll");
       break;
     }
 
-    if (bytes < 0) {
-      if (errno == EINTR && !running)
-        break;
+    if (pfd.revents & POLLIN) {
+      BankRequest req;
 
-      perror("read");
-      continue;
+      ssize_t bytes = read(fd, &req, sizeof(req));
+
+      if (bytes == sizeof(req)) {
+        enqueue(&queue, req);
+      } else if (bytes < 0 && errno != EINTR) {
+        perror("read");
+      }
     }
-
-    if (bytes != sizeof(req))
-      continue;
-
-    enqueue(&queue, req);
   }
 
   close(fd);
 
-  BankRequest stop;
+  printf("Reader thread exiting...\n");
 
+  BankRequest stop;
   stop.type = SHUTDOWN;
 
-  for (int i = 0; i < NUM_WORKERS; i++)
+  for (int i = 0; i < NUM_WORKERS; i++) {
     enqueue(&queue, stop);
+  }
 
-  pthread_exit(NULL);
+  return NULL;
 }
 
 void *worker_thread(void *arg) {
   int id = *(int *)arg;
-  int t_success;
 
   printf("Worker %d started.\n", id);
 
   while (1) {
     BankRequest req = dequeue(&queue);
 
+    int success = 0;
+
     switch (req.type) {
     case TRANSFER:
 
-      printf("[Worker %d] Transfer\n", id);
+      success = transfer_money(req.account1, req.account2, req.amount);
 
-      t_success = transfer_money(req.account1, req.account2, req.amount);
       printf(
           "WORKER %d | CUSTOMER %d | TRANSFER | %d -> %d | Amount = %d | %s\n",
           id, req.customer_id, req.account1, req.account2, req.amount,
-          t_success ? "SUCCESS" : "FAILED");
+          success ? "SUCCESS" : "FAILED");
 
       break;
 
     case DEPOSIT:
 
-      t_success = deposit_money(req.account2, req.amount);
+      success = deposit_money(req.account1, req.amount);
+
       printf(
           "WORKER %d | CUSTOMER %d | DEPOSIT | Account %d | Amount = %d | %s\n",
-          id, req.customer_id, req.account2, req.amount,
-          t_success ? "SUCCESS" : "FAILED");
+          id, req.customer_id, req.account1, req.amount,
+          success ? "SUCCESS" : "FAILED");
+
       break;
 
     case WITHDRAW:
 
-      t_success = withdraw_money(req.account1, req.amount);
+      success = withdraw_money(req.account1, req.amount);
+
       printf("WORKER %d | CUSTOMER %d | WITHDRAW | Account %d | Amount = %d | "
              "%s\n",
-             id, req.customer_id, req.account2, req.amount,
-             t_success ? "SUCCESS" : "FAILED");
+             id, req.customer_id, req.account1, req.amount,
+             success ? "SUCCESS" : "FAILED");
+
       break;
 
     case BALANCE:
 
-      printf("WORKER %d | CUSTOMER %d | BALANCE | Account %d | Amount = %d\n",
+      printf("WORKER %d | CUSTOMER %d | BALANCE | Account %d | Balance = %d\n",
              id, req.customer_id, req.account1, get_balance(req.account1));
+
       break;
 
     case SHUTDOWN:
 
       printf("Worker %d exiting.\n", id);
-
-      pthread_exit(NULL);
+      return NULL;
     }
   }
 }
 
-int main() {
+int main(void) {
   printf("========== BANK ==========\n");
 
-  // SIGINT
-  struct sigaction sa;
+  init_bank();
 
-  memset(&sa, 0, sizeof(sa));
+  queue_init(&queue);
+
+  struct sigaction sa;
 
   sa.sa_handler = sigint_handler;
   sigemptyset(&sa.sa_mask);
-
   sa.sa_flags = 0;
 
   if (sigaction(SIGINT, &sa, NULL) == -1) {
@@ -137,43 +154,36 @@ int main() {
     exit(EXIT_FAILURE);
   }
 
-  if (sigaction(SIGTERM, &sa, NULL) == -1) {
-    perror("sigaction SIGTERM");
-    exit(EXIT_FAILURE);
-  }
-
-  // ------
-
-  init_bank();
-
-  queue_init(&queue);
-
   pthread_t reader;
-
-  pthread_create(&reader, NULL, reader_thread, NULL);
-
   pthread_t workers[NUM_WORKERS];
 
   int ids[NUM_WORKERS];
 
+  if (pthread_create(&reader, NULL, reader_thread, NULL)) {
+    perror("pthread_create");
+    exit(EXIT_FAILURE);
+  }
+
   for (int i = 0; i < NUM_WORKERS; i++) {
     ids[i] = i;
 
-    pthread_create(&workers[i], NULL, worker_thread, &ids[i]);
+    if (pthread_create(&workers[i], NULL, worker_thread, &ids[i])) {
+      perror("pthread_create");
+      exit(EXIT_FAILURE);
+    }
   }
 
   pthread_join(reader, NULL);
 
-  for (int i = 0; i < NUM_WORKERS; i++)
+  for (int i = 0; i < NUM_WORKERS; i++) {
     pthread_join(workers[i], NULL);
+  }
 
-  printf("\n");
+  printf("\n========== FINAL STATE ==========\n");
 
   print_bank();
 
-  printf("Final total = %d\n", total_balance());
+  printf("Bank shutdown complete.\n");
 
-  printf("Bank shutting down.\n");
-
-  return 0;
+  return EXIT_SUCCESS;
 }
