@@ -66,6 +66,7 @@ void *reader_thread(void *arg) {
 
 void *worker_thread(void *arg) {
   int id = *(int *)arg;
+  int t_success;
 
   printf("Worker %d started.\n", id);
 
@@ -77,26 +78,36 @@ void *worker_thread(void *arg) {
 
       printf("[Worker %d] Transfer\n", id);
 
-      transfer_money(req.account1, req.account2, req.amount);
+      t_success = transfer_money(req.account1, req.account2, req.amount);
+      printf(
+          "WORKER %d | CUSTOMER %d | TRANSFER | %d -> %d | Amount = %d | %s\n",
+          id, req.customer_id, req.account1, req.account2, req.amount,
+          t_success ? "SUCCESS" : "FAILED");
 
       break;
 
     case DEPOSIT:
 
-      deposit_money(req.account2, req.amount);
-
+      t_success = deposit_money(req.account2, req.amount);
+      printf(
+          "WORKER %d | CUSTOMER %d | DEPOSIT | Account %d | Amount = %d | %s\n",
+          id, req.customer_id, req.account2, req.amount,
+          t_success ? "SUCCESS" : "FAILED");
       break;
 
     case WITHDRAW:
 
-      withdraw_money(req.account1, req.amount);
-
+      t_success = withdraw_money(req.account1, req.amount);
+      printf("WORKER %d | CUSTOMER %d | WITHDRAW | Account %d | Amount = %d | "
+             "%s\n",
+             id, req.customer_id, req.account2, req.amount,
+             t_success ? "SUCCESS" : "FAILED");
       break;
 
     case BALANCE:
 
-      printf("Account %d : %d\n", req.account1, get_balance(req.account1));
-
+      printf("WORKER %d | CUSTOMER %d | BALANCE | Account %d | Amount = %d\n",
+             id, req.customer_id, req.account1, get_balance(req.account1));
       break;
 
     case SHUTDOWN:

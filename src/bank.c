@@ -36,14 +36,15 @@ void init_bank() {
 }
 
 int transfer_money(int from, int to, int amount) {
+  int return_val;
   if (from == to)
-    return 0;
+    return -1;
 
   if (from < 0 || from >= NUM_ACCOUNTS)
-    return 0;
+    return -1;
 
   if (to < 0 || to >= NUM_ACCOUNTS)
-    return 0;
+    return -1;
 
   int first = (from < to) ? from : to;
   int second = (from < to) ? to : from;
@@ -57,12 +58,9 @@ int transfer_money(int from, int to, int amount) {
     accounts[from].balance -= amount;
     accounts[to].balance += amount;
 
-    sprintf(buffer, "TRANSFER | %d -> %d | Amount = %d | SUCCESS", from, to,
-            amount);
+    return_val = 1;
   } else {
-    sprintf(buffer,
-            "TRANSFER | %d -> %d | Amount = %d | FAILED (Insufficient funds)",
-            from, to, amount);
+    return_val = 0;
   }
 
   pthread_mutex_unlock(&accounts[second].lock);
@@ -70,7 +68,7 @@ int transfer_money(int from, int to, int amount) {
 
   log_transaction(buffer);
 
-  return 1;
+  return return_val;
 }
 
 int deposit_money(int account, int amount) {
