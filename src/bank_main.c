@@ -105,7 +105,7 @@ void *worker_thread(void *arg) {
       success = deposit_money(req.account1, req.amount);
 
       log_printf(
-          "WORKER %d | CUSTOMER %d | DEPOSIT | Account %d | Amount = %d | %s\n",
+          "WORKER %d | CUSTOMER %d | DEPOSIT | ACCOUNT %d | AMOUNT = %d | %s\n",
           id, req.customer_id, req.account1, req.amount,
           success ? "SUCCESS" : "FAILED");
 
@@ -116,7 +116,7 @@ void *worker_thread(void *arg) {
       success = withdraw_money(req.account1, req.amount);
 
       log_printf(
-          "WORKER %d | CUSTOMER %d | WITHDRAW | Account %d | Amount = %d | "
+          "WORKER %d | CUSTOMER %d | WITHDRAW | ACCOUNT %d | AMOUNT = %d | "
           "%s\n",
           id, req.customer_id, req.account1, req.amount,
           success ? "SUCCESS" : "FAILED");
@@ -126,7 +126,7 @@ void *worker_thread(void *arg) {
     case BALANCE:
 
       log_printf(
-          "WORKER %d | CUSTOMER %d | BALANCE | Account %d | Balance = %d\n", id,
+          "WORKER %d | CUSTOMER %d | BALANCE | ACCOUNT %d | AMOUNT = %d\n", id,
           req.customer_id, req.account1, get_balance(req.account1));
 
       break;

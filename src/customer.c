@@ -9,13 +9,15 @@
 
 static int rand_account(void) { return rand() % NUM_ACCOUNTS; }
 
-static int rand_amount(void) { return rand() % 200 + 1; }
+static int rand_amount(void) { return rand() % 500 + 1; }
 
 int main(int argc, char *argv[]) {
   if (argc != 2) {
     fprintf(stderr, "Usage: %s <customer_id>\n", argv[0]);
     return EXIT_FAILURE;
   }
+
+  logger_init("logs/customer.log");
 
   int customer_id = atoi(argv[1]);
 
@@ -47,8 +49,8 @@ int main(int argc, char *argv[]) {
         req.account2 = rand_account();
       } while (req.account1 == req.account2);
 
-      log_printf("[Customer %d] TRANSFER %d -> %d (%d)\n", customer_id,
-                 req.account1, req.account2, req.amount);
+      log_printf("CUSTOMER %d | TRANSFER | %d -> %d | Amount = %d\n",
+                 customer_id, req.account1, req.account2, req.amount);
 
     } else if (r < 70) {
 
@@ -58,8 +60,8 @@ int main(int argc, char *argv[]) {
       req.account2 = -1;
       // req.amount = 0;
 
-      log_printf("[Customer %d] DEPOSIT %d (%d)\n", customer_id, req.account1,
-                 req.amount);
+      log_printf("CUSTOMER %d | DEPOSIT | ACCOUNT %d | AMOUNT = %d\n",
+                 customer_id, req.account1, req.amount);
 
     } else if (r < 90) {
 
@@ -69,8 +71,8 @@ int main(int argc, char *argv[]) {
       req.account2 = -1;
       // req.amount = 0;
 
-      log_printf("[Customer %d] WITHDRAW %d (%d)\n", customer_id, req.account1,
-                 req.amount);
+      log_printf("CUSTOMER %d | WITHDRAW | ACCOUNT %d | AMOUNT = %d\n",
+                 customer_id, req.account1, req.amount);
 
     } else {
 
@@ -80,7 +82,8 @@ int main(int argc, char *argv[]) {
       req.account2 = -1;
       req.amount = 0;
 
-      log_printf("[Customer %d] BALANCE %d\n", customer_id, req.account1);
+      log_printf("CUSTOMER %d | BALANCE | ACCOUNT %d\n", customer_id,
+                 req.account1);
     }
 
     if (write(fd, &req, sizeof(req)) != sizeof(req)) {
@@ -88,7 +91,7 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    usleep((rand() % 500 + 250) * 1000);
+    usleep((rand() % 500 + 250) * 500);
   }
 
   close(fd);
