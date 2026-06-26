@@ -55,6 +55,7 @@ int main(int argc, char *argv[]) {
 
       req.account1 = rand_account();
       req.account2 = -1;
+      // req.amount = 0;
 
       printf("[Customer %d] DEPOSIT %d (%d)\n", customer_id, req.account1,
              req.amount);
@@ -65,6 +66,7 @@ int main(int argc, char *argv[]) {
 
       req.account1 = rand_account();
       req.account2 = -1;
+      // req.amount = 0;
 
       printf("[Customer %d] WITHDRAW %d (%d)\n", customer_id, req.account1,
              req.amount);
