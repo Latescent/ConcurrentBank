@@ -33,7 +33,7 @@ int main(void) {
   }
 
   if (bank_pid == 0) {
-    execl("./bank_main", "bank_main", NULL);
+    execl("./build/bank_main", "bank_main", NULL);
 
     perror("execl(bank_main)");
     exit(EXIT_FAILURE);
@@ -57,7 +57,7 @@ int main(void) {
 
       snprintf(id, sizeof(id), "%d", i);
 
-      execl("./customer", "customer", id, NULL);
+      execl("./build/customer", "customer", id, NULL);
 
       perror("execl(customer)");
       exit(EXIT_FAILURE);
