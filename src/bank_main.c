@@ -18,7 +18,7 @@ void sigint_handler(int sig) { running = 0; }
 RequestQueue queue;
 
 void *reader_thread(void *arg) {
-  int fd = open(FIFO_PATH, O_RDONLY);
+  int fd = open(FIFO_PATH, O_RDWR);
 
   if (fd < 0) {
     perror("open");
